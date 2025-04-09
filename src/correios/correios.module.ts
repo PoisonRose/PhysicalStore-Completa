@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { CorreiosService } from './correios.service';
+import { Module } from "@nestjs/common";
+import { CorreiosService } from "./correios.service";
 
 @Module({
-  providers: [CorreiosService]
+  providers: [CorreiosService],
 })
 export class CorreiosModule {}
