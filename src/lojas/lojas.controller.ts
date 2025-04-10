@@ -15,4 +15,9 @@ export class LojasController {
   async findOne(@Param("id") id: string): Promise<Store> {
     return this.lojasService.findOne(id);
   }
+
+  @Get("por-cep/:cep")
+  async findByCep(@Param("cep") cep: string) {
+    return this.lojasService.findByCep(cep);
+  }
 }
