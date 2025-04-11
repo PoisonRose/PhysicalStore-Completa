@@ -6,9 +6,14 @@ import { LojasController } from "./lojas.controller";
 import { ViaCepService } from "src/via-cep/via-cep.service";
 import { MapsService } from "src/maps/maps.service";
 import { HttpModule } from "@nestjs/axios";
+import { ConfigModule } from "@nestjs/config";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Store]), HttpModule],
+  imports: [
+    TypeOrmModule.forFeature([Store]),
+    HttpModule,
+    ConfigModule.forRoot(),
+  ],
   providers: [LojasService, ViaCepService, MapsService],
   controllers: [LojasController],
 })
