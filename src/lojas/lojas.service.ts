@@ -5,6 +5,7 @@ import { Store } from "./entities/loja.entity";
 import { initialStores } from "./lojas.seed";
 import { ViaCepService } from "src/via-cep/via-cep.service";
 import { MapsService } from "src/maps/maps.service";
+import { FreteService } from "src/frete/frete.service";
 
 @Injectable()
 export class LojasService {
@@ -13,6 +14,7 @@ export class LojasService {
     private readonly lojasRepository: Repository<Store>,
     private readonly viaCepService: ViaCepService,
     private readonly mapsService: MapsService,
+    private readonly freteService: FreteService,
   ) {}
 
   async seedDatabase() {
@@ -37,6 +39,7 @@ export class LojasService {
 
   async findByCep(cep: string): Promise<{
     stores: any[];
+    freightOptions: any[];
     pins: any[];
   }> {
     const userLocation = await this.viaCepService.getAddressByCep(cep);
@@ -62,8 +65,26 @@ export class LojasService {
       (store) => store.type === "PDV" && store.distanceValue <= 50,
     );
 
+    if (pdvStores.length === 0) {
+      const freteOptions = await this.freteService.calcularFrete({
+        fromPostalCode: "01310100",
+        toPostalCode: cep,
+        height: 4,
+        width: 12,
+        length: 17,
+        weight: 0.3,
+      });
+
+      return {
+        stores: [],
+        freightOptions: freteOptions,
+        pins: [],
+      };
+    }
+
     return {
       stores: pdvStores,
+      freightOptions: [],
       pins: storesWithDistance.map((store) => ({
         position: { lat: store.latitude, lng: store.longitude },
         title: store.storeName,

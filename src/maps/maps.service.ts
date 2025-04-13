@@ -36,7 +36,7 @@ export class MapsService {
 
     return {
       distanceText: element.distance.text,
-      distanceValue: element.distance.value / 100,
+      distanceValue: element.distance.value / 1000,
     };
   }
 }
