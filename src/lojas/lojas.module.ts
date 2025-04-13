@@ -7,6 +7,7 @@ import { ViaCepService } from "src/via-cep/via-cep.service";
 import { MapsService } from "src/maps/maps.service";
 import { HttpModule } from "@nestjs/axios";
 import { ConfigModule } from "@nestjs/config";
+import { FreteService } from "src/frete/frete.service";
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { ConfigModule } from "@nestjs/config";
     HttpModule,
     ConfigModule.forRoot(),
   ],
-  providers: [LojasService, ViaCepService, MapsService],
+  providers: [LojasService, ViaCepService, MapsService, FreteService],
   controllers: [LojasController],
 })
 export class LojasModule implements OnModuleInit {
