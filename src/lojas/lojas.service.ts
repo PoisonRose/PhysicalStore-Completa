@@ -91,4 +91,10 @@ export class LojasService {
       })),
     };
   }
+
+  async findByState(state: string): Promise<Store[]> {
+    return this.lojasRepository.find({
+      where: { state: state.toUpperCase() },
+    });
+  }
 }

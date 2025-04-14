@@ -20,4 +20,9 @@ export class LojasController {
   async findByCep(@Param("cep") cep: string) {
     return this.lojasService.findByCep(cep);
   }
+
+  @Get("por-estado/:estado")
+  async findByState(@Param("estado") estado: string): Promise<Store[]> {
+    return this.lojasService.findByState(estado);
+  }
 }
