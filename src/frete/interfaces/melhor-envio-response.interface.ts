@@ -31,4 +31,11 @@ export interface MelhorEnvioFrete {
   company: Company;
 }
 
+export interface FreteOptionResponse {
+  prazo: string;
+  price: string;
+  description: string;
+  codProdutoAgencia: string;
+}
+
 export type MelhorEnvioResponse = MelhorEnvioFrete[];

@@ -7,9 +7,12 @@ import { ViaCepService } from "src/via-cep/via-cep.service";
 import { MapsService } from "src/maps/maps.service";
 import { FreteService } from "src/frete/frete.service";
 import {
+  LojaFreteResponse,
+  PDVResponse,
   StoreResponse1,
   StoreResponse2,
 } from "src/common/dto/store-response.dto";
+import { FreteOptionResponse } from "src/frete/interfaces/melhor-envio-response.interface";
 
 @Injectable()
 export class LojasService {
@@ -24,8 +27,8 @@ export class LojasService {
   async seedDatabase() {
     const count = await this.lojasRepository.count();
     if (count === 0) {
+      await this.lojasRepository.clear();
       await this.lojasRepository.save(initialStores);
-      console.log("Dados ficticios inseridos!");
     }
   }
 
@@ -65,55 +68,107 @@ export class LojasService {
     offset: number = 0,
   ): Promise<StoreResponse2> {
     const userLocation = await this.viaCepService.getAddressByCep(cep);
-
     const allStores = await this.findAll();
     const storesArray = allStores.stores;
 
-    const storesWithDistance = await Promise.all(
-      storesArray.map(async (store) => {
-        const distance = await this.mapsService.calculateDistance(
-          { lat: userLocation.latitude, lng: userLocation.longitude },
-          { lat: store.latitude, lng: store.longitude },
-        );
+    const storesWithDistance = (
+      await Promise.all(
+        storesArray.map(async (store) => {
+          const distance = await this.mapsService.calculateDistance(
+            { lat: userLocation.latitude, lng: userLocation.longitude },
+            { lat: store.latitude, lng: store.longitude },
+          );
 
-        return {
-          ...store,
-          distance: distance.distanceText,
-          distanceValue: distance.distanceValue,
-        };
-      }),
-    );
+          if (store.type === "PDV") {
+            return {
+              name: store.storeName,
+              city: store.city,
+              postalCode: store.postalCode,
+              type: "PDV" as const,
+              distance: distance.distanceText,
+              latitude: store.latitude,
+              longitude: store.longitude,
+              value: [
+                {
+                  prazo: `${store.shippingTimeInDays + 1} dias úteis`,
+                  price: "R$ 15,00",
+                  description: "Motoboy",
+                },
+              ],
+            };
+          } else {
+            const freteOptions = await this.freteService
+              .calcularFrete({
+                fromPostalCode: store.postalCode.replace("-", ""),
+                toPostalCode: cep,
+                height: 4,
+                width: 12,
+                length: 17,
+                weight: 0.3,
+              })
+              .catch(() => []);
+
+            if (freteOptions.length === 0) return null;
+
+            return {
+              name: store.storeName,
+              city: store.city,
+              postalCode: store.postalCode,
+              type: "LOJA" as const,
+              distance: distance.distanceText,
+              latitude: store.latitude,
+              longitude: store.longitude,
+              value: freteOptions.map((frete: FreteOptionResponse) => ({
+                prazo: frete.prazo,
+                price: frete.price,
+                description: frete.description,
+                codProdutoAgencia: frete.description.includes("SEDEX")
+                  ? "04014"
+                  : "04510",
+              })),
+            };
+          }
+        }),
+      )
+    ).filter((store) => store !== null) as (PDVResponse | LojaFreteResponse)[];
 
     const pdvStores = storesWithDistance.filter(
-      (store) => store.type === "PDV" && store.distanceValue <= 50,
+      (store): store is PDVResponse => {
+        if (store.type !== "PDV") return false;
+        const distanceValue = parseFloat(
+          store.distance.replace(" km", "").replace(",", ""),
+        );
+        return distanceValue <= 50;
+      },
     );
 
     if (pdvStores.length === 0) {
-      const freteOptions = await this.freteService.calcularFrete({
-        fromPostalCode: "01310100",
-        toPostalCode: cep,
-        height: 4,
-        width: 12,
-        length: 17,
-        weight: 0.3,
-      });
-
+      const lojasComFrete = storesWithDistance.filter(
+        (store): store is LojaFreteResponse => store.type === "LOJA",
+      );
       return {
-        stores: [],
-        freightOptions: freteOptions,
-        pins: [],
+        stores: lojasComFrete.slice(offset, offset + limit),
+        pins: lojasComFrete.map((loja) => ({
+          position: {
+            lat: Number(loja.latitude),
+            lng: Number(loja.longitude),
+          },
+          title: loja.name,
+        })),
         limit,
         offset,
-        total: 0,
+        total: lojasComFrete.length,
       };
     }
 
     return {
       stores: pdvStores.slice(offset, offset + limit),
-      freightOptions: [],
       pins: storesWithDistance.map((store) => ({
-        position: { lat: store.latitude, lng: store.longitude },
-        title: store.storeName,
+        position: {
+          lat: Number(store.latitude),
+          lng: Number(store.longitude),
+        },
+        title: store.name,
       })),
       limit,
       offset,
