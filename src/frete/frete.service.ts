@@ -8,6 +8,7 @@ import {
   MelhorEnvioFrete,
 } from "./interfaces/melhor-envio-response.interface";
 import { AxiosResponse } from "axios";
+import { FreteOption } from "./interfaces/frete-option.interface";
 
 @Injectable()
 export class FreteService {
@@ -46,18 +47,16 @@ export class FreteService {
     return this.formatResponse(response.data);
   }
 
-  private formatResponse(data: MelhorEnvioFrete[]) {
+  private formatResponse(data: MelhorEnvioFrete[]): FreteOption[] {
     return data
       .filter(
         (item) =>
-          item.company.name === "Correios" &&
+          item.company?.name === "Correios" &&
           ["SEDEX", "PAC"].includes(item.name),
       )
       .map((item) => ({
         prazo: `${item.delivery_time} dias úteis`,
-        price: `R$ ${parseFloat(item.packages[0]?.price || "0")
-          .toFixed(2)
-          .replace(".", ",")}`,
+        price: `R$ ${item.packages?.[0]?.price || "0,00"}`,
         description: item.name,
       }));
   }
