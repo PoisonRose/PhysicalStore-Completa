@@ -3,9 +3,9 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Store } from "./entities/loja.entity";
 import { initialStores } from "./lojas.seed";
-import { ViaCepService } from "src/via-cep/via-cep.service";
-import { MapsService } from "src/maps/maps.service";
-import { FreteService } from "src/frete/frete.service";
+import { ViaCepService } from "../via-cep/via-cep.service";
+import { MapsService } from "../maps/maps.service";
+import { FreteService } from "../frete/frete.service";
 import {
   LojaFreteResponse,
   PDVResponse,
