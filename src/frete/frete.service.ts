@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { HttpService } from "@nestjs/axios";
 import { firstValueFrom } from "rxjs";
 import { ConfigService } from "@nestjs/config";
@@ -18,33 +18,42 @@ export class FreteService {
   ) {}
 
   async calcularFrete(dto: CalcularFreteDto) {
-    const token = this.configService.get<string>("MELHOR_ENVIO_TOKEN");
+    try {
+      const token = this.configService.get<string>("MELHOR_ENVIO_TOKEN");
 
-    const response: AxiosResponse<MelhorEnvioResponse> = await firstValueFrom(
-      this.httpService.post(
-        "https://www.melhorenvio.com.br/api/v2/me/shipment/calculate",
-        {
-          from: { postal_code: dto.fromPostalCode },
-          to: { postal_code: dto.toPostalCode },
-          package: {
-            height: dto.height,
-            width: dto.width,
-            length: dto.length,
-            weight: dto.weight,
+      const response: AxiosResponse<MelhorEnvioResponse> = await firstValueFrom(
+        this.httpService.post(
+          "https://www.melhorenvio.com.br/api/v2/me/shipment/calculate",
+          {
+            from: { postal_code: dto.fromPostalCode },
+            to: { postal_code: dto.toPostalCode },
+            package: {
+              height: dto.height,
+              width: dto.width,
+              length: dto.length,
+              weight: dto.weight,
+            },
           },
-        },
-        {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            "User-Agent": "PhysicalStore lucashenrique4848@gmail.com",
+          {
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              "User-Agent": "PhysicalStore lucashenrique4848@gmail.com",
+            },
           },
-        },
-      ),
-    );
+        ),
+      );
 
-    return this.formatResponse(response.data);
+      return this.formatResponse(response.data);
+    } catch (error) {
+      if (error.response?.data?.errors) {
+        throw new InternalServerErrorException(
+          `Erro no Melhor Envio: ${JSON.stringify(error.response.data.errors)}`,
+        );
+      }
+      throw new InternalServerErrorException("Falha ao celular fretes");
+    }
   }
 
   private formatResponse(data: MelhorEnvioFrete[]): FreteOption[] {

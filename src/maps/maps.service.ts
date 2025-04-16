@@ -1,8 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { HttpService } from "@nestjs/axios";
 import { firstValueFrom } from "rxjs";
 import { ConfigService } from "@nestjs/config";
-import { AxiosResponse } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import { GoogleDistanceMatrixResponse } from "./interfaces/google-distance-response.interface";
 
 @Injectable()
@@ -16,27 +16,38 @@ export class MapsService {
     origin: { lat: string; lng: string },
     destination: { lat: string; lng: string },
   ): Promise<{ distanceText: string; distanceValue: number }> {
-    const googleMapsKey = this.configService.get<string>("GOOGLE_MAPS_API_KEY");
-
-    const response: AxiosResponse<GoogleDistanceMatrixResponse> =
-      await firstValueFrom(
-        this.httpService.get(
-          `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin.lat},${origin.lng}&destinations=${destination.lat},${destination.lng}&key=${googleMapsKey}`,
-        ),
+    try {
+      const googleMapsKey = this.configService.get<string>(
+        "GOOGLE_MAPS_API_KEY",
       );
 
-    const element = response.data.rows[0]?.elements[0];
-    if (!element || element.status === "ZERO_RESULTS") {
-      throw new Error("Não foi possível calcular a distância");
-    }
+      const response: AxiosResponse<GoogleDistanceMatrixResponse> =
+        await firstValueFrom(
+          this.httpService.get(
+            `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin.lat},${origin.lng}&destinations=${destination.lat},${destination.lng}&key=${googleMapsKey}`,
+          ),
+        );
 
-    if (!element.distance) {
-      throw new Error("Distância não disponível");
-    }
+      const element = response.data.rows[0]?.elements[0];
+      if (!element || element.status === "ZERO_RESULTS") {
+        throw new Error("Não foi possível calcular a distância");
+      }
 
-    return {
-      distanceText: element.distance.text,
-      distanceValue: element.distance.value / 1000,
-    };
+      if (!element.distance) {
+        throw new Error("Distância não disponível");
+      }
+
+      return {
+        distanceText: element.distance.text,
+        distanceValue: element.distance.value / 1000,
+      };
+    } catch (error) {
+      if (error.response?.data?.error_message) {
+        throw new InternalServerErrorException(
+          `Erro no Google Maps: ${error.response.data.error_message}`,
+        );
+      }
+      throw new InternalServerErrorException("Falha ao calcular distância");
+    }
   }
 }
