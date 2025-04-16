@@ -52,7 +52,7 @@ export class FreteService {
           `Erro no Melhor Envio: ${JSON.stringify(error.response.data.errors)}`,
         );
       }
-      throw new InternalServerErrorException("Falha ao celular fretes");
+      throw new InternalServerErrorException("Falha ao calcular fretes");
     }
   }
 
