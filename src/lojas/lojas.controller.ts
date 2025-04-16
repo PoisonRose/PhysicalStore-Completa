@@ -5,6 +5,7 @@ import {
   StoreResponse1,
   StoreResponse2,
 } from "src/common/dto/store-response.dto";
+import { CepValidationPipe } from "src/common/pipes/cep-validation.pipe";
 
 @Controller("lojas")
 export class LojasController {
@@ -25,7 +26,7 @@ export class LojasController {
 
   @Get("por-cep/:cep")
   async findByCep(
-    @Param("cep") cep: string,
+    @Param("cep", CepValidationPipe) cep: string,
     @Query("limit") limit: number = 10,
     @Query("offset") offset: number = 0,
   ): Promise<StoreResponse2> {
