@@ -5,7 +5,7 @@ import {
   StoreResponse1,
   StoreResponse2,
 } from "src/common/dto/store-response.dto";
-import { CepValidationPipe } from "src/common/pipes/cep-validation.pipe";
+import { CepValidationPipe } from "../common/pipes/cep-validation.pipe";
 
 @Controller("lojas")
 export class LojasController {
