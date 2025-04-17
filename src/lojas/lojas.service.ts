@@ -2,35 +2,26 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Store } from "./entities/loja.entity";
-import { initialStores } from "./lojas.seed";
-import { ViaCepService } from "../via-cep/via-cep.service";
-import { MapsService } from "../maps/maps.service";
-import { FreteService } from "../frete/frete.service";
+import { StoreLocatorService } from "./lojas-locator.service";
 import {
   LojaFreteResponse,
   PDVResponse,
   StoreResponse1,
   StoreResponse2,
 } from "src/common/dto/store-response.dto";
-import { FreteOptionResponse } from "src/frete/interfaces/melhor-envio-response.interface";
+import { StoreResponseBuilder } from "./builders/store-response.builder";
+import { PdvResponseBuilderService } from "./builders/pdv-response.builder";
+import { LojaFreteResponseBuilderService } from "./builders/loja-frete-response.builder";
 
 @Injectable()
 export class LojasService {
   constructor(
     @InjectRepository(Store)
     private readonly lojasRepository: Repository<Store>,
-    private readonly viaCepService: ViaCepService,
-    private readonly mapsService: MapsService,
-    private readonly freteService: FreteService,
+    private readonly storeLocatorService: StoreLocatorService,
+    private readonly pdvBuilder: PdvResponseBuilderService,
+    private readonly lojaFreteBuilder: LojaFreteResponseBuilderService,
   ) {}
-
-  async seedDatabase() {
-    const count = await this.lojasRepository.count();
-    if (count === 0) {
-      await this.lojasRepository.clear();
-      await this.lojasRepository.save(initialStores);
-    }
-  }
 
   async findAll(
     limit: number = 10,
@@ -67,72 +58,22 @@ export class LojasService {
     limit: number = 10,
     offset: number = 0,
   ): Promise<StoreResponse2> {
-    const userLocation = await this.viaCepService.getAddressByCep(cep);
-    const allStores = await this.findAll();
-    const storesArray = allStores.stores;
-
-    const storesWithDistance = (
+    const storesWithDistance = await this.storeLocatorService.locateByCep(cep);
+    const builders: StoreResponseBuilder[] = [
+      this.pdvBuilder,
+      this.lojaFreteBuilder,
+    ];
+    const storesWithResponses = (
       await Promise.all(
-        storesArray.map(async (store) => {
-          const distance = await this.mapsService.calculateDistance(
-            { lat: userLocation.latitude, lng: userLocation.longitude },
-            { lat: store.latitude, lng: store.longitude },
-          );
-
-          if (store.type === "PDV") {
-            return {
-              name: store.storeName,
-              city: store.city,
-              postalCode: store.postalCode,
-              type: "PDV" as const,
-              distance: distance.distanceText,
-              latitude: store.latitude,
-              longitude: store.longitude,
-              value: [
-                {
-                  prazo: `${store.shippingTimeInDays + 1} dias úteis`,
-                  price: "R$ 15,00",
-                  description: "Motoboy",
-                },
-              ],
-            };
-          } else {
-            const freteOptions = await this.freteService
-              .calcularFrete({
-                fromPostalCode: store.postalCode.replace("-", ""),
-                toPostalCode: cep,
-                height: 4,
-                width: 12,
-                length: 17,
-                weight: 0.3,
-              })
-              .catch(() => []);
-
-            if (freteOptions.length === 0) return null;
-
-            return {
-              name: store.storeName,
-              city: store.city,
-              postalCode: store.postalCode,
-              type: "LOJA" as const,
-              distance: distance.distanceText,
-              latitude: store.latitude,
-              longitude: store.longitude,
-              value: freteOptions.map((frete: FreteOptionResponse) => ({
-                prazo: frete.prazo,
-                price: frete.price,
-                description: frete.description,
-                codProdutoAgencia: frete.description.includes("SEDEX")
-                  ? "04014"
-                  : "04510",
-              })),
-            };
-          }
+        storesWithDistance.map(async (item) => {
+          const builder = builders.find((b) => b.supports(item.store));
+          if (!builder) return null;
+          return builder.build(item, cep);
         }),
       )
-    ).filter((store) => store !== null) as (PDVResponse | LojaFreteResponse)[];
+    ).filter((store) => store !== null);
 
-    const pdvStores = storesWithDistance.filter(
+    const pdvStores = storesWithResponses.filter(
       (store): store is PDVResponse => {
         if (store.type !== "PDV") return false;
         const distanceValue = parseFloat(
@@ -143,36 +84,35 @@ export class LojasService {
     );
 
     if (pdvStores.length === 0) {
-      const lojasComFrete = storesWithDistance.filter(
+      const lojasComFrete = storesWithResponses.filter(
         (store): store is LojaFreteResponse => store.type === "LOJA",
       );
-      return {
-        stores: lojasComFrete.slice(offset, offset + limit),
-        pins: lojasComFrete.map((loja) => ({
-          position: {
-            lat: Number(loja.latitude),
-            lng: Number(loja.longitude),
-          },
-          title: loja.name,
-        })),
+      const { stores, pins, total } = this.paginateAndPin(
+        lojasComFrete,
         limit,
         offset,
-        total: lojasComFrete.length,
+      );
+      return {
+        stores,
+        pins,
+        limit,
+        offset,
+        total,
       };
     }
 
-    return {
-      stores: pdvStores.slice(offset, offset + limit),
-      pins: storesWithDistance.map((store) => ({
-        position: {
-          lat: Number(store.latitude),
-          lng: Number(store.longitude),
-        },
-        title: store.name,
-      })),
+    const { stores, pins, total } = this.paginateAndPin(
+      pdvStores,
       limit,
       offset,
-      total: pdvStores.length,
+    );
+
+    return {
+      stores,
+      pins,
+      limit,
+      offset,
+      total,
     };
   }
 
@@ -193,5 +133,16 @@ export class LojasService {
       offset,
       total,
     };
+  }
+
+  private paginateAndPin<
+    T extends { latitude: string; longitude: string; name: string },
+  >(items: T[], limit: number, offset: number) {
+    const stores = items.slice(offset, offset + limit);
+    const pins = stores.map((item) => ({
+      position: { lat: +item.latitude, lng: +item.longitude },
+      title: item.name,
+    }));
+    return { stores, pins, total: items.length };
   }
 }
