@@ -8,6 +8,10 @@ import { MapsService } from "src/maps/maps.service";
 import { HttpModule } from "@nestjs/axios";
 import { ConfigModule } from "@nestjs/config";
 import { FreteService } from "src/frete/frete.service";
+import { LojasSeederService } from "./lojas-seeder.service";
+import { StoreLocatorService } from "./lojas-locator.service";
+import { PdvResponseBuilderService } from "./builders/pdv-response.builder";
+import { LojaFreteResponseBuilderService } from "./builders/loja-frete-response.builder";
 
 @Module({
   imports: [
@@ -15,13 +19,23 @@ import { FreteService } from "src/frete/frete.service";
     HttpModule,
     ConfigModule.forRoot(),
   ],
-  providers: [LojasService, ViaCepService, MapsService, FreteService],
+  providers: [
+    LojasService,
+    ViaCepService,
+    MapsService,
+    FreteService,
+    LojasSeederService,
+    StoreLocatorService,
+    PdvResponseBuilderService,
+    LojaFreteResponseBuilderService,
+  ],
   controllers: [LojasController],
 })
 export class LojasModule implements OnModuleInit {
-  constructor(private readonly lojasService: LojasService) {}
+  constructor(private readonly seeder: LojasSeederService) {}
 
   async onModuleInit() {
-    await this.lojasService.seedDatabase();
+    //await this.lojasService.seedDatabase();
+    await this.seeder.seedDatabase();
   }
 }
