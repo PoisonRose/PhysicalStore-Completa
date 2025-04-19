@@ -3,7 +3,7 @@ import { StoreResponseBuilder } from "./store-response.builder";
 import { StoreWithDistance } from "../lojas-locator.service";
 import { LojaFreteResponse } from "src/common/dto/store-response.dto";
 import { Store } from "../entities/loja.entity";
-import { FreteService } from "src/frete/frete.service";
+import { FreteService } from "../../frete/frete.service";
 import { FreteOptionResponse } from "src/frete/interfaces/melhor-envio-response.interface";
 
 @Injectable()

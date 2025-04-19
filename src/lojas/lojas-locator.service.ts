@@ -2,8 +2,8 @@ import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Store } from "./entities/loja.entity";
-import { ViaCepService } from "src/via-cep/via-cep.service";
-import { MapsService } from "src/maps/maps.service";
+import { ViaCepService } from "../via-cep/via-cep.service";
+import { MapsService } from "../maps/maps.service";
 
 export interface StoreWithDistance {
   store: Store;
