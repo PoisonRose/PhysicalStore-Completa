@@ -12,6 +12,7 @@ describe("LojasService", () => {
   let repository: any;
   let storeLocatorService: any;
   let pdvBuilder: any;
+  let lojaFreteBuilder: any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

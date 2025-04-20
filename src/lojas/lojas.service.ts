@@ -127,6 +127,10 @@ export class LojasService {
       take: limit,
     });
 
+    if (stores.length === 0) {
+      throw new NotFoundException(`Lojas no Estado ${state} não encontradas`);
+    }
+
     return {
       stores,
       limit,
