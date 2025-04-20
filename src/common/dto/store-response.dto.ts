@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Store } from "src/lojas/entities/loja.entity";
+import { Store } from "../../lojas/entities/loja.entity";
 
 export class StoreResponse1 {
   @ApiProperty({ description: "Lista de lojas", type: [Store] })

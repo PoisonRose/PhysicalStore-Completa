@@ -1,18 +1,21 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
 import { LojasService } from "./lojas.service";
-//import { Store } from "./entities/loja.entity";
 import {
   StoreResponse1,
   StoreResponse2,
-} from "src/common/dto/store-response.dto";
+} from "../common/dto/store-response.dto";
 import { CepValidationPipe } from "../common/pipes/cep-validation.pipe";
 import {
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { StateValidationPipe } from "../common/pipes/state-validation.pipe";
 
 @ApiTags("Lojas")
 @Controller("lojas")
@@ -28,11 +31,13 @@ export class LojasController {
     name: "limit",
     required: false,
     description: "Limite de lojas retornadas",
+    example: 10,
   })
   @ApiQuery({
     name: "offset",
     required: false,
     description: "Ponto inicial para paginação",
+    example: 0,
   })
   @ApiResponse({
     status: 200,
@@ -52,32 +57,43 @@ export class LojasController {
     description: "Retorna loja com id especificado",
   })
   @ApiParam({ name: "id", required: true, description: "ID da loja" })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: "Loja especificada retornada com sucesso",
     type: StoreResponse1,
   })
+  @ApiNotFoundResponse({ description: "Nenhuma loja encontrada com o id {id}" })
   async findOne(@Param("id") id: string): Promise<StoreResponse1> {
     return this.lojasService.findOne(id);
   }
 
   @Get("por-cep/:cep")
   @ApiOperation({ summary: "Buscar lojas próximas a um CEP" })
-  @ApiParam({ name: "cep", required: true, description: "CEP de origem" })
+  @ApiParam({
+    name: "cep",
+    required: true,
+    description: "CEP de origem",
+    example: "01310-100",
+  })
   @ApiQuery({
     name: "limit",
     required: false,
     description: "Limite de lojas retornadas",
+    example: 10,
   })
   @ApiQuery({
     name: "offset",
     required: false,
     description: "Ponto inicial para paginação",
+    example: 0,
   })
   @ApiResponse({
     status: 200,
-    description: "Lista de lojas próximas ao CEP.",
+    description:
+      "Lista de lojas próximas ao CEP OU Opção de Frete caso não haja PDVs próximos",
     type: StoreResponse2,
+  })
+  @ApiBadRequestResponse({
+    description: "CEP inválido. Formato esperado: 00000000 ou 00000-000",
   })
   async findByCep(
     @Param("cep", CepValidationPipe) cep: string,
@@ -96,24 +112,33 @@ export class LojasController {
     name: "estado",
     required: true,
     description: "Sigla do Estado (Exemplo: SP)",
+    example: "SP",
   })
   @ApiQuery({
     name: "limit",
     required: false,
     description: "Limite de lojas retornadas",
+    example: 10,
   })
   @ApiQuery({
     name: "offset",
     required: false,
     description: "Ponto inicial para paginação",
+    example: 0,
   })
-  @ApiResponse({
-    status: 200,
-    description: "Lista de lojas no estado.",
+  @ApiOkResponse({
     type: StoreResponse1,
+    description: "Lista de lojas no estado.",
+  })
+  @ApiBadRequestResponse({
+    description:
+      "Formato inválido de sigla: deve ter 2 letras (ex: PE). OU Estado inválido: A sigla deve corresponder a um estado brasileiro válido.",
+  })
+  @ApiNotFoundResponse({
+    description: "Lojas no Estado {estado} não encontradas",
   })
   async findByState(
-    @Param("estado") estado: string,
+    @Param("estado", StateValidationPipe) estado: string,
     @Query("limit") limit: number = 10,
     @Query("offset") offset: number = 0,
   ): Promise<StoreResponse1> {
