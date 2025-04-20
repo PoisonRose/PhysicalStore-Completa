@@ -51,7 +51,7 @@ export class LojasController {
     summary: "Lista loja com o id especificado",
     description: "Retorna loja com id especificado",
   })
-  @ApiQuery({ name: "id", required: true, description: "ID da loja" })
+  @ApiParam({ name: "id", required: true, description: "ID da loja" })
   @ApiResponse({
     status: 200,
     description: "Loja especificada retornada com sucesso",
@@ -63,7 +63,7 @@ export class LojasController {
 
   @Get("por-cep/:cep")
   @ApiOperation({ summary: "Buscar lojas próximas a um CEP" })
-  @ApiQuery({ name: "cep", required: true, description: "CEP de origem" })
+  @ApiParam({ name: "cep", required: true, description: "CEP de origem" })
   @ApiQuery({
     name: "limit",
     required: false,
@@ -93,7 +93,7 @@ export class LojasController {
     description: "Retorna loja com endereço no estado especificado",
   })
   @ApiParam({
-    name: "Estado",
+    name: "estado",
     required: true,
     description: "Sigla do Estado (Exemplo: SP)",
   })
@@ -113,7 +113,7 @@ export class LojasController {
     type: StoreResponse1,
   })
   async findByState(
-    @Param("Estado") estado: string,
+    @Param("estado") estado: string,
     @Query("limit") limit: number = 10,
     @Query("offset") offset: number = 0,
   ): Promise<StoreResponse1> {
