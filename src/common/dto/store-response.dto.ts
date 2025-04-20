@@ -1,9 +1,17 @@
+import { ApiProperty } from "@nestjs/swagger";
 import { Store } from "src/lojas/entities/loja.entity";
 
 export class StoreResponse1 {
+  @ApiProperty({ description: "Lista de lojas", type: [Store] })
   stores: Store[];
+
+  @ApiProperty({ description: "Número máximo de registros retornados" })
   limit: number;
+
+  @ApiProperty({ description: "Número de registros ignorados (offset)" })
   offset: number;
+
+  @ApiProperty({ description: "Número total de registros" })
   total: number;
 }
 
@@ -39,10 +47,18 @@ export interface LojaFreteResponse {
 }
 
 export class StoreResponse2 {
+  @ApiProperty({ description: "Lista de lojas retornada" })
   stores: (PDVResponse | LojaFreteResponse)[];
+
+  @ApiProperty({ description: "Localização(latitude e longitude) no mapa" })
   pins: any[];
-  //freightOptions: any[];
+
+  @ApiProperty({ description: "Número máximo de registros retornados" })
   limit: number;
+
+  @ApiProperty({ description: "Número de registros ignorados (offset)" })
   offset: number;
+
+  @ApiProperty({ description: "Número total de registros" })
   total: number;
 }
