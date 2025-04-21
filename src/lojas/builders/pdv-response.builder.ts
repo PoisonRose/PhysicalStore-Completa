@@ -10,6 +10,7 @@ export class PdvResponseBuilderService implements StoreResponseBuilder {
     return store.type === "PDV";
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async build(item: StoreWithDistance): Promise<PDVResponse> {
     const { store, distanceText } = item;
 
