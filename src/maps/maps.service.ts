@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { HttpService } from "@nestjs/axios";
 import { firstValueFrom } from "rxjs";
 import { ConfigService } from "@nestjs/config";
-import { AxiosError, AxiosResponse } from "axios";
+import { AxiosResponse } from "axios";
 import { GoogleDistanceMatrixResponse } from "./interfaces/google-distance-response.interface";
 
 @Injectable()

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { LojasService } from "./lojas.service";
@@ -12,6 +15,7 @@ describe("LojasService", () => {
   let repository: any;
   let storeLocatorService: any;
   let pdvBuilder: any;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let lojaFreteBuilder: any;
 
   beforeEach(async () => {

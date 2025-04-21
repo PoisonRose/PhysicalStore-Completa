@@ -38,6 +38,7 @@ export class StoreLocatorService {
             distanceValue: result.distanceValue,
             distanceText: result.distanceText,
           };
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           throw new InternalServerErrorException(
             `Erro ao calcular distância para a loja ${store.storeID}`,
