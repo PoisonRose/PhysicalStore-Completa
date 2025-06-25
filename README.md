@@ -21,9 +21,69 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+## Overview
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+PhysicalStore-Completa is a [Nest](https://github.com/nestjs/nest)-based API system for managing physical store locations and shipping calculations. This system enables users to find nearby stores based on a postal code (CEP), retrieve detailed store information, and calculate shipping costs between locations.
+
+### System Purpose
+
+The PhysicalStore-Completa system serves two primary functions:
+
+- Store Location Management: Allows users to find physical stores near a specified location, filter stores by state, and access detailed store information.
+
+- Shipping Calculation: Provides shipping cost calculation between locations, taking into account package dimensions and weight.
+
+### System Architecture Overview
+
+The system follows a modular architecture based on the NestJS framework, with a clear separation between controllers, services, and data access layers.
+
+**Architecture Diagram**
+![architecture diagram](/assets/img/architecture-diagram.png)
+
+### Key Features
+
+**Store Management**
+- Find stores near specified postal code(CEP)
+- List stores by state
+- Retrieve detailed store information
+- Distinguish between "PDV"(points of sale) and "LOJA"(stores with shipping) types
+
+**Shipping Calculaiton**
+- Calculate shipping costs between postal codes
+- Consider package dimensions and weight in calculations
+- Provide multiple shipping ooptions
+
+### Technical Stack
+
+The system is built using the following technologies:
+
+| Component | Technology |
+|---------|----------|
+| Framework | NestJS |
+| Database | SQLite |
+| API Documentation | Swagger |
+| External Integrations | Google Maps API, ViaCEP API, Melhor Envio API |
+| Runtime | Node.js |
+| Package Management | npm |
+
+### API Endpoints
+
+The system exposes the following main API endpoints:
+
+| Endpoint | HTTP Method | Description |
+|----------|--------|-------------|
+| /lojas | GET | List all stores |
+| /lojas/:id | GET | Get stores by id |
+| /lojas/por-cep/:cep | GET | Find stores near the given CEP/postal code, if none is found calculate shipping costs from the online store to the CEP/postal code |
+| /lojas/por-estado/:estado | GET | Find stores in a specific state |
+| /frete | POST | Calculate shipping costs |
+
+### External integrations
+The system integrates with 3 external services to provide its functionality:
+
+1. **ViaCEP API**: To convert postal codes to geographic coordinates
+2. **Google Maps API**: To calculate the distance between locations
+3. **Melhor Envio API**: For shipping cost calculations
 
 ## Project setup
 
